@@ -1,0 +1,5 @@
+elasticsearch:
+    url: https://<ELASTICSEARCH_HOST>:443 # The scheme and port are required
+    username: <USERNAME>
+    password: <PASSWORD>
+index: <INDEX> # Optional - see `--index` and `--auto-index`
