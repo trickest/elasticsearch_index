@@ -221,7 +221,7 @@ def main():
             if not file_type:
                 file_type = determine_file_type(file)
 
-            if not index:
+            if args.dir or not index:
                 index = determine_index(file)
 
             log_output(f'[*] Importing {file} into the {index} index as a {file_type.upper()} file', log_file)
