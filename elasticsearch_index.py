@@ -166,7 +166,7 @@ def determine_index(file_path):
         path_chunks = file_path.split('/')
         in_index = find_last_index(path_chunks, 'in')
         node_id = path_chunks[in_index + 1]
-        index = node_id.split('-')[0]
+        index = '-'.join(node_id.split('-')[:-1])
     else:
         base = os.path.basename(file_path)
         index = os.path.splitext(base)[0]
