@@ -150,6 +150,9 @@ def determine_file_type(filename):
         else:
             return 'list'
 
+def find_last_index(search_list, search_item):
+    return len(search_list) - 1 - search_list[::-1].index(search_item)
+
 def determine_index(file_path):
     """
     Determines the index name automaitcally based on the file path
@@ -161,7 +164,7 @@ def determine_index(file_path):
 
     if is_trickest_node_output_file:
         path_chunks = file_path.split('/')
-        in_index = path_chunks.index('in')
+        in_index = find_last_index(path_chunks, 'in')
         node_id = path_chunks[in_index + 1]
         index = node_id.split('-')[0]
     else:
