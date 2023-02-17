@@ -162,11 +162,19 @@ def determine_index(file_path):
     # If the file path is `in/nuclei-1/output.txt`, the index is `nuclei` not `output`
     is_trickest_node_output_file = re.match(r"(.*)in\/([-a-z]+)-\d+\/(.*)", file_path)
 
+
+    # Special handling for trickest-cli naming conventions
+    # If the file path is `run-2023-01-25-110345/nuclei/output.txt`, the index is `nuclei` not `output`
+    is_trickest_cli_output_file = re.match(r"(.*)run\-\d{4}\-\d{2}\-\d{2}(.*)", file_path)
+
     if is_trickest_node_output_file:
         path_chunks = file_path.split('/')
         in_index = find_last_index(path_chunks, 'in')
         node_id = path_chunks[in_index + 1]
         index = '-'.join(node_id.split('-')[:-1])
+    elif is_trickest_cli_output_file:
+        path_chunks = file_path.split('/')
+        index = path_chunks[-2]
     else:
         base = os.path.basename(file_path)
         index = os.path.splitext(base)[0]
