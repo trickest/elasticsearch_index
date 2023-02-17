@@ -186,7 +186,8 @@ def exit_with_error(error):
     exit(1)
 
 def log_output(message, log_file):
-    log_file.write(message + '\n')
+    if log_file:
+        log_file.write(message + '\n')
     print(message)
 
 def main():
@@ -199,48 +200,55 @@ def main():
     parser.add_argument('--elastic-id', action="store_true", help="Use Elasticsearch's automatically-generated IDs")
     parser.add_argument('--auto-index', action="store_true", help="Automatically determine the index name based on the file name (e.g. subdomains.txt -> subdomains index)")
     parser.add_argument('--dir', help='Directory with files to be indexed')
-    parser.add_argument('--output', required=True, help='Output log')
+    parser.add_argument('--output', help='Output log')
     args = parser.parse_args()
 
     config = read_config_yaml(args.config)
     elasticsearch_config = config['elasticsearch']
     client = create_client(elasticsearch_config['url'], elasticsearch_config['username'], elasticsearch_config['password'])
 
-    with open(args.output, 'a') as log_file:
-        log_output('[*] Connected to Elasticsearch', log_file)
+    if args.output:
+        log_file = open(args.output, 'a')
+    else:
+        log_file = False
 
-        if not ('index' in config or args.index or args.auto_index):
-            exit_with_error("You need to either set an index of set the `--auto-index` flag")
+    log_output('[*] Connected to Elasticsearch', log_file)
 
-        if not args.file and not args.dir:
-            exit_with_error("No input provided. Use --file or --dir")
+    if not ('index' in config or args.index or args.auto_index):
+        exit_with_error("You need to either set an index of set the `--auto-index` flag")
 
-        files = []
-        if args.dir:
-            files = get_files_in_directory(args.dir)
-        if args.file:
-            files.append(args.file)
+    if not args.file and not args.dir:
+        exit_with_error("No input provided. Use --file or --dir")
 
-        index = config['index'] if 'index' in config else args.index
+    files = []
+    if args.dir:
+        files = get_files_in_directory(args.dir)
+    if args.file:
+        files.append(args.file)
 
-        file_type = args.file_type
+    index = config['index'] if 'index' in config else args.index
 
-        for file in files:
-            if not file_type:
-                file_type = determine_file_type(file)
+    file_type = args.file_type
 
-            if args.dir or not index:
-                index = determine_index(file)
+    for file in files:
+        if not file_type:
+            file_type = determine_file_type(file)
 
-            log_output(f'[*] Importing {file} into the {index} index as a {file_type.upper()} file', log_file)
-            if file_type == 'jsonlines':
-                index_jsonlines_file(client, index, file, args.field)
-            elif file_type == 'json':
-                index_json_list(client, index, file, args.field)
-            else:
-                index_list_file(client, index, file, args.field, args.elastic_id)
+        if args.dir or not index:
+            index = determine_index(file)
 
-            log_output(f'[*] Successfully imported {file} into {index}', log_file)
+        log_output(f'[*] Importing {file} into the {index} index as a {file_type.upper()} file', log_file)
+        if file_type == 'jsonlines':
+            index_jsonlines_file(client, index, file, args.field)
+        elif file_type == 'json':
+            index_json_list(client, index, file, args.field)
+        else:
+            index_list_file(client, index, file, args.field, args.elastic_id)
+
+        log_output(f'[*] Successfully imported {file} into {index}', log_file)
+
+    if log_file:
+        log_file.close()
 
 if __name__ == '__main__':
     main()
