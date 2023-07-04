@@ -1,2 +1,2 @@
-elasticsearch==8.6.1
+elasticsearch==8.8.0
 PyYAML==6.0
