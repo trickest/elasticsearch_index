@@ -73,10 +73,10 @@ def index_json_list(client, index, filename, id_field_name=None):
             obj_list = json.load(file)
             if not isinstance(obj_list, list):
                 raise ValueError("{filename} is not a JSON list")
-            if id_field_name:
-                for obj in obj_list:
+            for obj in obj_list:
+                obj['_index'] = index
+                if id_field_name:
                     obj['_id'] = obj[id_field_name]
-                    obj['_index'] = index
             for success, info in parallel_bulk(client, obj_list):
                 if not success:
                     print(f"Error indexing line: {info}")
