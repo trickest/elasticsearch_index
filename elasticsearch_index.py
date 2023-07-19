@@ -16,7 +16,8 @@ def create_client(url, username, password):
     try:
         client = Elasticsearch(
             [url],
-            basic_auth=(username, password)
+            basic_auth=(username, password),
+            request_timeout=60
         )
     except ConnectionError as e:
         raise ConnectionError(f"Error connecting to Elasticsearch: {e}")
