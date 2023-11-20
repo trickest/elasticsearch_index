@@ -1,5 +1,11 @@
-# Elasticsearch Index
-This tool is designed to help you index your data in Elasticsearch. It supports several file types, including plain text files, JSON, and JSONLines. It also has the option to automatically determine the index name based on the file name, or you can specify the index name yourself.
+<h1 align="center">Elasticsearch Index<a href="https://twitter.com/intent/tweet?text=Elaticsearch%20Index%20-%20Manage%20attack%20surface%20data%20on%20Elasticsearch%0Ahttps://github.com/trickest/elasticsearch_index"> <img src="https://img.shields.io/badge/Tweet--lightgrey?logo=twitter&style=social" alt="Tweet" height="20"/></a></h1>
+
+<h3 align="center">
+Manage attack surface data on Elasticsearch
+</h3>
+<br>
+
+Elasticsearch Index is a straightforward tool for indexing data into Elasticsearch. It supports several file types, including plain text files, JSON, and JSONLines. It also has the option to automatically determine the index name based on the file name, or you can specify the index name yourself. You can also query for matching records from your terminal or [Trickest workflows](https://trickest.io/auth/register).
 
 ## Installation
 ### Source
@@ -47,6 +53,8 @@ The `elasticsearch` object is required for authentication. The URL must include 
 
 The `index` key is optional. If it's not specified, you can either specify the index name using the `--index` argument or let the tool automatically determine the index name based on the file name by using the `--auto-index` argument.
 
+[<img src="./banner.png" />](https://trickest.io/auth/register)
+
 ## Examples
 
 ### Import a plain text file
@@ -84,3 +92,5 @@ Run an [Elasticsearch DSL query](https://www.elastic.co/guide/en/elasticsearch/r
 ```
 python elasticsearch_index.py --config config.yaml --query "status_code:200" --index webservers --output output.txt
 ```
+
+[<img src="./banner.png" />](https://trickest.io/auth/register)
