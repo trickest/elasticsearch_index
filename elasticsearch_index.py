@@ -1,5 +1,5 @@
 from elasticsearch import Elasticsearch
-from elasticsearch.helpers import parallel_bulk
+import elasticsearch.helpers
 from urllib.parse import urlparse
 import argparse
 import json
@@ -42,7 +42,7 @@ def index_list_file(client, index, filename, field_name, elastic_id=False):
                     obj['_id'] = line.strip()
                 yield obj
 
-    for success, info in parallel_bulk(client, generator()):
+    for success, info in elasticsearch.helpers.parallel_bulk(client, generator()):
         if not success:
             print(f"Error indexing line: {info}")
 
@@ -60,7 +60,7 @@ def index_jsonlines_file(client, index, filename, id_field_name=None):
                 obj['_index'] = index
                 yield obj
 
-    for success, info in parallel_bulk(client, generator()):
+    for success, info in elasticsearch.helpers.parallel_bulk(client, generator()):
         if not success:
             print(f"Error indexing line: {info}")
 
@@ -78,7 +78,7 @@ def index_json_list(client, index, filename, id_field_name=None):
                 obj['_index'] = index
                 if id_field_name:
                     obj['_id'] = obj[id_field_name]
-            for success, info in parallel_bulk(client, obj_list):
+            for success, info in elasticsearch.helpers.parallel_bulk(client, obj_list):
                 if not success:
                     print(f"Error indexing line: {info}")
     except Exception as e:
@@ -182,6 +182,38 @@ def determine_index(file_path):
 
     return index
 
+def index_exists(client, index):
+    """
+    Check if an Elasticsearch index exists
+    """
+    if client.indices.exists(index=index):
+        return True
+    return False
+
+def export_data(client, index, query_string, filename):
+    """
+    Export data from Elasticsearch index based on the provided query.
+    """
+    if not index_exists(client, index):
+        exit_with_error(f'The index "{index}" was not found')
+
+    query = {
+        "query": {
+            "query_string": {
+                "query": query_string
+            }
+        }
+    }
+
+    data = elasticsearch.helpers.scan(client, index=index, query=query)
+
+    count = 0
+    with open(filename, 'w') as f:
+        for item in data:
+            count +=1
+            f.write(json.dumps(item['_source']) + "\n")
+    print(f'The query "{query_string}" returned {count} records')
+
 def exit_with_error(error):
     print(f'[X] {error}')
     exit(1)
@@ -201,22 +233,35 @@ def main():
     parser.add_argument('--elastic-id', action="store_true", help="Use Elasticsearch's automatically-generated IDs")
     parser.add_argument('--auto-index', action="store_true", help="Automatically determine the index name based on the file name (e.g. subdomains.txt -> subdomains index)")
     parser.add_argument('--dir', help='Directory with files to be indexed')
-    parser.add_argument('--output', help='Output log')
+    parser.add_argument('--query', help='Query to search for')
+    parser.add_argument('--log', help='Log file')
+    parser.add_argument('--output', help='Output file')
     args = parser.parse_args()
 
     config = read_config_yaml(args.config)
     elasticsearch_config = config['elasticsearch']
-    client = create_client(elasticsearch_config['url'], elasticsearch_config['username'], elasticsearch_config['password'])
 
-    if args.output:
-        log_file = open(args.output, 'a')
+    if not ('index' in config or args.index or args.auto_index):
+        exit_with_error("You need to either set an index of set the `--auto-index` flag")
+
+    client = create_client(elasticsearch_config['url'], elasticsearch_config['username'], elasticsearch_config['password'])
+    if args.log:
+        log_file = open(args.log, 'a')
     else:
         log_file = False
 
     log_output('[*] Connected to Elasticsearch', log_file)
 
-    if not ('index' in config or args.index or args.auto_index):
-        exit_with_error("You need to either set an index of set the `--auto-index` flag")
+    index = config['index'] if 'index' in config else args.index
+
+    if args.query:
+        if args.output:
+            output_file = args.output
+        else:
+            output_file = 'output.txt'
+
+        export_data(client, index, args.query, output_file)
+        exit(0)
 
     if not args.file and not args.dir:
         exit_with_error("No input provided. Use --file or --dir")
@@ -226,8 +271,6 @@ def main():
         files = get_files_in_directory(args.dir)
     if args.file:
         files.append(args.file)
-
-    index = config['index'] if 'index' in config else args.index
 
     file_type = args.file_type
 
