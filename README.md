@@ -2,8 +2,15 @@
 This tool is designed to help you index your data in Elasticsearch. It supports several file types, including plain text files, JSON, and JSONLines. It also has the option to automatically determine the index name based on the file name, or you can specify the index name yourself.
 
 ## Installation
+### Source
 ```
+git clone https://github.com/trickest/elasticsearch_index
+cd elasticsearch_index
 pip install -r requirements.txt
+```
+### Docker
+```
+docker run quay.io/trickest/elasticsearch_index
 ```
 
 ## Usage
